@@ -2,7 +2,7 @@ from database import save_message, get_history
 from google import genai
 from dotenv import load_dotenv
 import os
-
+print("KEY =>", repr(os.getenv("GEMINI_API_KEY")))
 load_dotenv()
 print("API KEY:", os.getenv("GEMINI_API_KEY"))
 print("BOT TOKEN:", os.getenv("BOT_TOKEN"))
