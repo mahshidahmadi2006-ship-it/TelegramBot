@@ -12,6 +12,8 @@ import os
 from ai import ask_ai
 
 load_dotenv()
+print("BOT =", repr(os.getenv("BOT_TOKEN")))
+print("GEMINI =", repr(os.getenv("GEMINI_API_KEY")))
 
 TOKEN = os.getenv("BOT_TOKEN")
 
