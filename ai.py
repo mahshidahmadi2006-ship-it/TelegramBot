@@ -1,34 +1,72 @@
-from database import save_message, get_history
 from google import genai
 from dotenv import load_dotenv
+from database import save_message, get_history
+from PIL import Image
 import os
-print("KEY =>", repr(os.getenv("GEMINI_API_KEY")))
+
+# -----------------------------
+# Load .env
+# -----------------------------
 load_dotenv()
-print("API KEY:", os.getenv("GEMINI_API_KEY"))
-print("BOT TOKEN:", os.getenv("BOT_TOKEN"))
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+client = genai.Client(
+    api_key=os.getenv("GEMINI_API_KEY")
+)
 
-
+# -----------------------------
+# Chat
+# -----------------------------
 def ask_ai(user_id, prompt):
-    # ذخیره پیام کاربر در دیتابیس
+
     save_message(user_id, "user", prompt)
 
-    # بازیابی کل تاریخچه از دیتابیس
-    rows = get_history(user_id)
+    history = get_history(user_id)
 
-    history = ""
-    for role, message in rows:
-        history += f"{role}: {message}\n"
+    conversation = ""
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=history,
-    )
+    for role, message in history:
+        if role == "user":
+            conversation += f"User: {message}\n"
+        else:
+            conversation += f"Assistant: {message}\n"
 
-    answer = response.text
+    try:
 
-    # ذخیره پاسخ مدل در دیتابیس
-    save_message(user_id, "assistant", answer)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=conversation,
+        )
 
-    return answer
+        answer = response.text
+
+        save_message(user_id, "assistant", answer)
+
+        return answer
+
+    except Exception as e:
+
+        return f"❌ {e}"
+
+
+# -----------------------------
+# Image Analysis
+# -----------------------------
+def ask_image(image_path, prompt):
+
+    try:
+
+        image = Image.open(image_path)
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                prompt,
+                image,
+            ],
+        )
+
+        return response.text
+
+    except Exception as e:
+
+        return f"❌ {e}"

@@ -8,26 +8,28 @@ from telegram.ext import (
 )
 from dotenv import load_dotenv
 import os
-from ai import ask_ai
 
-# -------------------------
-# Load Environment Variables
-# -------------------------
+from ai import ask_ai, ask_image
+
+# -----------------------------
+# Load .env
+# -----------------------------
 load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN")
 
-# -------------------------
-# Start Command
-# -------------------------
+# -----------------------------
+# /start
+# -----------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     keyboard = [
         ["🤖 چت با هوش مصنوعی"],
+        ["🖼 تحلیل عکس"],
         ["🆔 آیدی من", "ℹ️ راهنما"],
     ]
 
-    reply_markup = ReplyKeyboardMarkup(
+    markup = ReplyKeyboardMarkup(
         keyboard,
         resize_keyboard=True
     )
@@ -35,14 +37,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "سلام 🌸\n\n"
         "به ربات هوش مصنوعی خوش اومدی.\n"
-        "هر سوالی داری از من بپرس 😊",
-        reply_markup=reply_markup
+        "هر سوالی داری بپرس 😊",
+        reply_markup=markup
     )
 
 
-# -------------------------
-# My ID Command
-# -------------------------
+# -----------------------------
+# /myid
+# -----------------------------
 async def myid(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
@@ -50,44 +52,28 @@ async def myid(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# -------------------------
-# Chat Handler
-# -------------------------
-async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# -----------------------------
+# تحلیل عکس
+# -----------------------------
+async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    user_message = update.message.text
+    photo = update.message.photo[-1]
 
-    # دکمه آیدی
-    if user_message == "🆔 آیدی من":
-        await update.message.reply_text(
-            f"🆔 آیدی شما:\n{update.effective_user.id}"
-        )
-        return
+    telegram_file = await photo.get_file()
 
-    # دکمه راهنما
-    if user_message == "ℹ️ راهنما":
-        await update.message.reply_text(
-            "💡 فقط سوالت رو برام بنویس تا با هوش مصنوعی جواب بدم."
-        )
-        return
+    image_path = "photo.jpg"
 
-    # دکمه چت
-    if user_message == "🤖 چت با هوش مصنوعی":
-        await update.message.reply_text(
-            "هر سوالی داری بپرس 😊"
-        )
-        return
+    await telegram_file.download_to_drive(image_path)
 
-    # پیام در حال فکر کردن
     wait = await update.message.reply_text(
-        "🤔 در حال فکر کردن..."
+        "🖼 در حال تحلیل عکس..."
     )
 
     try:
 
-        answer = ask_ai(
-            update.effective_user.id,
-            user_message
+        answer = ask_image(
+            image_path,
+            "این تصویر را کامل و دقیق به زبان فارسی توضیح بده."
         )
 
         await wait.delete()
@@ -99,18 +85,81 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(e)
 
         await wait.edit_text(
-            "❌ متأسفانه خطایی رخ داد."
+            f"❌ خطا:\n{e}"
         )
 
 
-# -------------------------
-# Main
-# -------------------------
+# -----------------------------
+# چت
+# -----------------------------
+async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    text = update.message.text
+
+    if text == "🆔 آیدی من":
+        await update.message.reply_text(
+            str(update.effective_user.id)
+        )
+        return
+
+    if text == "ℹ️ راهنما":
+        await update.message.reply_text(
+            "هر سوالی داری از من بپرس 😊\n\n"
+            "همچنین می‌توانی برای تحلیل، عکس ارسال کنی."
+        )
+        return
+
+    if text == "🖼 تحلیل عکس":
+        await update.message.reply_text(
+            "📷 لطفاً عکس موردنظر را ارسال کن."
+        )
+        return
+
+    if text == "🤖 چت با هوش مصنوعی":
+        await update.message.reply_text(
+            "سؤالت را بنویس 😊"
+        )
+        return
+
+    wait = await update.message.reply_text(
+        "🤔 در حال فکر کردن..."
+    )
+
+    try:
+
+        answer = ask_ai(
+            update.effective_user.id,
+            text
+        )
+
+        await wait.delete()
+
+        await update.message.reply_text(answer)
+
+    except Exception as e:
+
+        print(e)
+
+        await wait.edit_text(
+            f"❌ {e}"
+        )
+
+
+# -----------------------------
+# Main
+# -----------------------------
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("myid", myid))
+
+app.add_handler(
+    MessageHandler(
+        filters.PHOTO,
+        photo,
+    )
+)
+
 app.add_handler(
     MessageHandler(
         filters.TEXT & ~filters.COMMAND,
@@ -118,6 +167,6 @@ app.add_handler(
     )
 )
 
-print("🤖 AI Bot is Running...")
+print("🤖 Bot is Running...")
 
 app.run_polling()
