@@ -9,17 +9,16 @@ from telegram.ext import (
 from dotenv import load_dotenv
 import os
 
-from ai import ask_ai, ask_image
+from ai import ask_ai, ask_image, ask_pdf
 
 # -----------------------------
-# Load .env
+# Load ENV
 # -----------------------------
 load_dotenv()
-
 TOKEN = os.getenv("BOT_TOKEN")
 
 # -----------------------------
-# /start
+# Start
 # -----------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -36,14 +35,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         "سلام 🌸\n\n"
-        "به ربات هوش مصنوعی خوش اومدی.\n"
-        "هر سوالی داری بپرس 😊",
+        "به ربات هوش مصنوعی خوش اومدی.",
         reply_markup=markup
     )
 
 
 # -----------------------------
-# /myid
+# My ID
 # -----------------------------
 async def myid(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -53,7 +51,7 @@ async def myid(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # -----------------------------
-# تحلیل عکس
+# Photo
 # -----------------------------
 async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -85,39 +83,72 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(e)
 
         await wait.edit_text(
-            f"❌ خطا:\n{e}"
+            f"❌ {e}"
         )
 
 
 # -----------------------------
-# چت
+# PDF
+# -----------------------------
+async def pdf(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    document = update.message.document
+
+    telegram_file = await document.get_file()
+
+    pdf_path = "file.pdf"
+
+    await telegram_file.download_to_drive(pdf_path)
+
+    wait = await update.message.reply_text(
+        "📄 در حال خواندن فایل..."
+    )
+
+    try:
+
+        answer = ask_pdf(pdf_path)
+
+        await wait.delete()
+
+        await update.message.reply_text(answer)
+
+    except Exception as e:
+
+        print(e)
+
+        await wait.edit_text(
+            f"❌ {e}"
+        )
+
+
+# -----------------------------
+# Chat
 # -----------------------------
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
 
     if text == "🆔 آیدی من":
-        await update.message.reply_text(
-            str(update.effective_user.id)
-        )
+        await myid(update, context)
         return
 
     if text == "ℹ️ راهنما":
         await update.message.reply_text(
-            "هر سوالی داری از من بپرس 😊\n\n"
-            "همچنین می‌توانی برای تحلیل، عکس ارسال کنی."
+            "✅ متن بفرست\n"
+            "✅ عکس بفرست\n"
+            "✅ فایل PDF بفرست"
         )
         return
 
     if text == "🖼 تحلیل عکس":
         await update.message.reply_text(
-            "📷 لطفاً عکس موردنظر را ارسال کن."
+            "📷 عکس را ارسال کن."
         )
         return
 
     if text == "🤖 چت با هوش مصنوعی":
         await update.message.reply_text(
-            "سؤالت را بنویس 😊"
+            "سوالت را بنویس 😊"
         )
         return
 
@@ -146,7 +177,7 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # -----------------------------
-# Main
+# App
 # -----------------------------
 app = ApplicationBuilder().token(TOKEN).build()
 
@@ -156,14 +187,21 @@ app.add_handler(CommandHandler("myid", myid))
 app.add_handler(
     MessageHandler(
         filters.PHOTO,
-        photo,
+        photo
+    )
+)
+
+app.add_handler(
+    MessageHandler(
+        filters.Document.PDF,
+        pdf
     )
 )
 
 app.add_handler(
     MessageHandler(
         filters.TEXT & ~filters.COMMAND,
-        chat,
+        chat
     )
 )
 

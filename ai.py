@@ -51,22 +51,63 @@ def ask_ai(user_id, prompt):
 # -----------------------------
 # Image Analysis
 # -----------------------------
-def ask_image(image_path, prompt):
+def ask_image(image_path, prompt=""):
 
-    try:
+    image = Image.open(image_path)
 
-        image = Image.open(image_path)
+    final_prompt = """
+تو یک دستیار هوش مصنوعی هستی.
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[
-                prompt,
-                image,
-            ],
-        )
+اگر تصویر شامل متن بود:
+- متن را بخوان.
+- خلاصه کن.
+- اگر سؤالی داخل تصویر بود، جوابش را بده.
 
-        return response.text
+اگر تصویر معمولی بود:
+- دقیق توضیح بده داخل تصویر چه چیزهایی دیده می‌شود.
+- اشیا، افراد، رنگ‌ها و محیط را توصیف کن.
 
-    except Exception as e:
+همیشه پاسخ را به زبان فارسی بده.
+"""
 
-        return f"❌ {e}"
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=[final_prompt, image]
+    )
+
+    return response.text
+    import fitz
+
+
+def ask_pdf(pdf_path):
+
+    doc = fitz.open(pdf_path)
+
+    text = ""
+
+    for page in doc:
+        text += page.get_text()
+
+    if len(text.strip()) == 0:
+        return "❌ این فایل متنی ندارد."
+
+    prompt = f"""
+تو یک دستیار هوش مصنوعی هستی.
+
+متن زیر از یک فایل PDF استخراج شده است.
+
+لطفاً:
+
+1. خلاصه کامل تهیه کن.
+2. نکات مهم را استخراج کن.
+3. اگر سؤال یا تمرینی وجود دارد، توضیح بده.
+
+{text[:80000]}
+"""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+    )
+
+    return response.text
