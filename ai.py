@@ -2,12 +2,17 @@ from google import genai
 from dotenv import load_dotenv
 from database import save_message, get_history
 from PIL import Image
+import fitz
 import os
 
 # -----------------------------
 # Load .env
 # -----------------------------
 load_dotenv()
+# -----------------------------
+# PDF Memory
+# -----------------------------
+pdf_memory = {}
 
 client = genai.Client(
     api_key=os.getenv("GEMINI_API_KEY")
@@ -76,38 +81,64 @@ def ask_image(image_path, prompt=""):
     )
 
     return response.text
-    import fitz
-
+    
 
 def ask_pdf(pdf_path):
 
+    print(">>> ask_pdf started")
+    print("fitz =", fitz)
+
     doc = fitz.open(pdf_path)
 
-    text = ""
+    pages = []
 
-    for page in doc:
-        text += page.get_text()
+    for i, page in enumerate(doc):
 
-    if len(text.strip()) == 0:
-        return "❌ این فایل متنی ندارد."
+        text = page.get_text().strip()
 
-    prompt = f"""
-تو یک دستیار هوش مصنوعی هستی.
+        if text:
 
-متن زیر از یک فایل PDF استخراج شده است.
+            pages.append({
+                "page": i + 1,
+                "text": text
+            })
 
-لطفاً:
+    return pages
 
-1. خلاصه کامل تهیه کن.
-2. نکات مهم را استخراج کن.
-3. اگر سؤال یا تمرینی وجود دارد، توضیح بده.
+# -----------------------------
+# PDF Manager
+# -----------------------------
 
-{text[:80000]}
-"""
+def add_pdf(user_id, file_name, pages):
+    if user_id not in pdf_memory:
+        pdf_memory[user_id] = []
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-    )
+    pdf_memory[user_id].append({
+        "name": file_name,
+        "pages": pages
+    })
 
-    return response.text
+
+def get_pdfs(user_id):
+    return pdf_memory.get(user_id, [])
+
+
+def clear_pdfs(user_id):
+    if user_id in pdf_memory:
+        del pdf_memory[user_id]
+
+
+def list_pdfs(user_id):
+    pdfs = get_pdfs(user_id)
+
+    if not pdfs:
+        return "📂 هیچ فایل فعالی وجود ندارد."
+
+    text = "📚 فایل‌های فعال:\n\n"
+
+    for i, pdf in enumerate(pdfs, start=1):
+        text += f"{i}. {pdf['name']}\n"
+
+    return text
+
+    

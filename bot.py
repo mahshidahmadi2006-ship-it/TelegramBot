@@ -9,13 +9,20 @@ from telegram.ext import (
 from dotenv import load_dotenv
 import os
 
-from ai import ask_ai, ask_image, ask_pdf
-
+from ai import (
+    ask_ai,
+    ask_image,
+    ask_pdf,
+    add_pdf,
+    list_pdfs,
+)
 # -----------------------------
 # Load ENV
 # -----------------------------
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
+
+
 
 # -----------------------------
 # Start
@@ -96,7 +103,9 @@ async def pdf(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     telegram_file = await document.get_file()
 
-    pdf_path = "file.pdf"
+    os.makedirs("pdfs", exist_ok=True)
+
+    pdf_path = f"pdfs/{update.effective_user.id}_{document.file_name}"
 
     await telegram_file.download_to_drive(pdf_path)
 
@@ -106,18 +115,29 @@ async def pdf(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
 
-        answer = ask_pdf(pdf_path)
+        pages = ask_pdf(pdf_path)
+
+        add_pdf(
+            update.effective_user.id,
+            document.file_name,
+            pages
+        )
 
         await wait.delete()
 
-        await update.message.reply_text(answer)
+        await update.message.reply_text(
+            f"✅ {document.file_name} اضافه شد.\n\n"
+            f"{list_pdfs(update.effective_user.id)}\n\n"
+            "حالا هر سوالی درباره فایل‌ها داری بپرس."
+        )
 
-    except Exception as e:
+    except Exception:
+        import traceback
 
-        print(e)
+        traceback.print_exc()
 
         await wait.edit_text(
-            f"❌ {e}"
+            "❌ خطا رخ داد. جزئیات در CMD چاپ شد."
         )
 
 
