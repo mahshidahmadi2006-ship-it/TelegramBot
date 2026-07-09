@@ -179,13 +179,17 @@ NOT_FOUND
 
 {all_text[:180000]}
 """
-
+print("===== PDF SENT TO GEMINI =====")
+print(question)
+print(all_text[:1000])
+print("==============================")
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
     )
 
     answer = response.text.strip()
+     print("Gemini جواب داد:", answer)
 
     if answer == "NOT_FOUND":
         return None
