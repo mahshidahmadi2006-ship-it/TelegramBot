@@ -141,4 +141,55 @@ def list_pdfs(user_id):
 
     return text
 
+
+def search_pdf(user_id, question):
+
+    pdfs = get_pdfs(user_id)
+
+    if not pdfs:
+        return None
+
+    all_text = ""
+
+    for pdf in pdfs:
+
+        all_text += f"\n\n===== {pdf['name']} =====\n"
+
+        for page in pdf["pages"]:
+
+            all_text += (
+                f"\nصفحه {page['page']}\n"
+                f"{page['text']}\n"
+            )
+
+    prompt = f"""
+تو فقط اجازه داری بر اساس PDFهای زیر پاسخ بدهی.
+
+اگر جواب سؤال داخل فایل‌ها نبود فقط بنویس:
+
+NOT_FOUND
+
+------------------------
+
+سؤال:
+
+{question}
+
+------------------------
+
+{all_text[:180000]}
+"""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+    )
+
+    answer = response.text.strip()
+
+    if answer == "NOT_FOUND":
+        return None
+
+    return answer
+
     

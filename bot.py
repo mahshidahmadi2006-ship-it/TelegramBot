@@ -15,6 +15,7 @@ from ai import (
     ask_pdf,
     add_pdf,
     list_pdfs,
+    search_pdf,
 )
 # -----------------------------
 # Load ENV
@@ -178,10 +179,12 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
 
-        answer = ask_ai(
-            update.effective_user.id,
-            text
-        )
+      user_id = update.effective_user.id
+
+answer = search_pdf(user_id, text)
+
+if answer is None:
+    answer = ask_ai(user_id, text)
 
         await wait.delete()
 
