@@ -177,27 +177,72 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🤔 در حال فکر کردن..."
     )
 
-  try:
+    try:
 
-    user_id = update.effective_user.id
+        user_id = update.effective_user.id
 
-    answer = search_pdf(user_id, text)
+        answer = search_pdf(user_id, text)
 
-    if answer is None:
-        answer = ask_ai(user_id, text)
+        if answer is None:
+            answer = ask_ai(user_id, text)
 
-    await wait.delete()
+        await wait.delete()
 
-    await update.message.reply_text(answer)
+        await update.message.reply_text(answer)
 
-except Exception as e:
+    except Exception as e:
 
-    print(e)
+        print(e)
 
-    await wait.edit_text(
-        f"❌ {e}"
+        await wait.edit_text(
+            f"❌ {e}"
+        )    wait = await update.message.reply_text(
+        "🤔 در حال فکر کردن..."
     )
 
+    try:
+
+        user_id = update.effective_user.id
+
+        answer = search_pdf(user_id, text)
+
+        if answer is None:
+            answer = ask_ai(user_id, text)
+
+        await wait.delete()
+
+        await update.message.reply_text(answer)
+
+    except Exception as e:
+
+        print(e)
+
+        await wait.edit_text(
+            f"❌ {e}"
+        )    wait = await update.message.reply_text(
+        "🤔 در حال فکر کردن..."
+    )
+
+    try:
+
+        user_id = update.effective_user.id
+
+        answer = search_pdf(user_id, text)
+
+        if answer is None:
+            answer = ask_ai(user_id, text)
+
+        await wait.delete()
+
+        await update.message.reply_text(answer)
+
+    except Exception as e:
+
+        print(e)
+
+        await wait.edit_text(
+            f"❌ {e}"
+        )
 
 # -----------------------------
 # App
