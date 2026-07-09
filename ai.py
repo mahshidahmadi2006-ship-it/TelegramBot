@@ -192,40 +192,5 @@ NOT_FOUND
 
     return answer
 
-    def find_related_pages(user_id, question):
-
-    pdfs = get_pdfs(user_id)
-
-    results = []
-
-    words = question.lower().split()
-
-    for pdf in pdfs:
-
-        for page in pdf["pages"]:
-
-            page_text = page["text"].lower()
-
-            score = 0
-
-            for word in words:
-                if word in page_text:
-                    score += 1
-
-            if score > 0:
-
-                results.append({
-                    "file": pdf["name"],
-                    "page": page["page"],
-                    "text": page["text"],
-                    "score": score
-                })
-
-    results.sort(
-        key=lambda x: x["score"],
-        reverse=True
-    )
-
-    return results[:5]
 
     
