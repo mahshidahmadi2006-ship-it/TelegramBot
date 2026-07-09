@@ -141,10 +141,11 @@ def list_pdfs(user_id):
 
     return text
 
-
 def search_pdf(user_id, question):
 
     pdfs = get_pdfs(user_id)
+
+    print("PDF Count:", len(pdfs))
 
     if not pdfs:
         return None
@@ -179,17 +180,20 @@ NOT_FOUND
 
 {all_text[:180000]}
 """
-print("===== PDF SENT TO GEMINI =====")
-print(question)
-print(all_text[:1000])
-print("==============================")
+
+    print("===== PDF SENT TO GEMINI =====")
+    print(question)
+    print(all_text[:1000])
+    print("==============================")
+
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
     )
 
     answer = response.text.strip()
-     print("Gemini جواب داد:", answer)
+
+    print("Gemini جواب داد:", answer)
 
     if answer == "NOT_FOUND":
         return None
