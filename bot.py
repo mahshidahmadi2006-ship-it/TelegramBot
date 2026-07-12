@@ -77,14 +77,18 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
 
+        user_prompt = context.user_data.get("image_prompt", "")
+
         answer = ask_image(
             image_path,
-            "این تصویر را کامل و دقیق به زبان فارسی توضیح بده."
+            user_prompt
         )
 
         await wait.delete()
 
         await update.message.reply_text(answer)
+
+        context.user_data.pop("image_prompt", None)
 
     except Exception as e:
 
@@ -171,6 +175,26 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "سوالت را بنویس 😊"
         )
+        return
+
+    image_commands = [
+        "متن این عکس را استخراج کن",
+        "متن عکس را استخراج کن",
+        "ترجمه کن",
+        "خلاصه کن",
+        "جواب سوال‌های عکس را بده",
+        "جواب سوال های عکس را بده",
+        "عکس را تحلیل کن"
+    ]
+
+    if text in image_commands:
+
+        context.user_data["image_prompt"] = text
+
+        await update.message.reply_text(
+            "📷 حالا عکس را ارسال کن."
+        )
+
         return
 
     wait = await update.message.reply_text(

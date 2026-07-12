@@ -60,20 +60,17 @@ def ask_image(image_path, prompt=""):
 
     image = Image.open(image_path)
 
-    final_prompt = """
-تو یک دستیار هوش مصنوعی هستی.
+    if prompt.strip():
 
-اگر تصویر شامل متن بود:
-- متن را بخوان.
-- خلاصه کن.
-- اگر سؤالی داخل تصویر بود، جوابش را بده.
+        final_prompt = f"""
+        
+        """
 
-اگر تصویر معمولی بود:
-- دقیق توضیح بده داخل تصویر چه چیزهایی دیده می‌شود.
-- اشیا، افراد، رنگ‌ها و محیط را توصیف کن.
+    else:
 
-همیشه پاسخ را به زبان فارسی بده.
-"""
+        final_prompt = """
+        ...
+        """
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
